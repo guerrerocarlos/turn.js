@@ -59,7 +59,7 @@
 
       // Duration of transition in milliseconds
 
-      duration: 600,
+      duration: 3000,
 
       // Enables hardware acceleration
 
@@ -317,9 +317,10 @@
         });
 
         $(document).bind(events.move, function(e) {
-          for (var page in data.pages)
-            if (has(page, data.pages))
-              flipMethods._eventMove.call(data.pages[page], e);
+          for (var page in data.pages){
+            flipMethods._eventMove.call(data.pages[page], e);
+
+          }
         }).
         bind(events.end, function(e) {
           for (var page in data.pages)
@@ -327,6 +328,11 @@
               flipMethods._eventEnd.call(data.pages[page], e);
 
         });
+
+        setTimeout(function(){
+          for (var page in data.pages)
+            flipMethods._eventMove.call(data.pages[page], undefined);
+        }, 4000)
 
         data.done = true;
 
@@ -1042,7 +1048,7 @@
       previous: function() {
 
         var data = this.data();
-        return this.turn('page', turnMethods._view.call(this, data.page).shift() - 1);
+        // return this.turn('page', turnMethods._view.call(this, data.page).shift() - 1);
 
       },
 
@@ -1347,8 +1353,14 @@
       },
 
       _cornerActivated: function(e) {
-        if (e.originalEvent === undefined) {
+
+        var allowedCorners = flipMethods._cAllowed.call(this);
+
+        if (e!=undefined && e.originalEvent === undefined) {
           return false;
+        }
+        if(e===undefined){
+          return 'br'
         }
 
         e = (isTouch) ? e.originalEvent.touches : [e];
@@ -1361,8 +1373,7 @@
             x: Math.max(0, e[0].pageX - pos.left),
             y: Math.max(0, e[0].pageY - pos.top)
           },
-          csz = data.opts.cornerSize,
-          allowedCorners = flipMethods._cAllowed.call(this);
+          csz = data.opts.cornerSize
 
         if (c.x <= 0 || c.y <= 0 || c.x >= width || c.y >= height) return false;
 
@@ -1715,7 +1726,7 @@
                 point2D(left ? 0 : 100, top ? 0 : 100),
                 point2D(gradientEndPointB.x, gradientEndPointB.y), [
                   [0.8, 'rgba(0,0,0,0)'],
-                  [1, 'rgba(0,0,0,' + (0.3 * gradientOpacity) + ')'],
+                  [1, 'rgba(0,0,0,' + (0.3 * gradientOpacity+0.01) + ')'],
                   [1, 'rgba(0,0,0,0)']
                 ],
                 3);
@@ -1805,7 +1816,7 @@
             this.animatef({
               from: [point.x, point.y],
               to: [c.x, c.y],
-              duration: 500,
+              duration: 4000,
               frame: function(v) {
                 c.x = Math.round(v[0]);
                 c.y = Math.round(v[1]);
@@ -1865,6 +1876,7 @@
 
       hideFoldedPage: function(animate) {
 
+
         var data = this.data().f;
 
         if (!data.point) return;
@@ -1905,6 +1917,7 @@
       },
 
       turnPage: function(corner) {
+
 
         var that = this,
           data = this.data().f;
@@ -1951,6 +1964,7 @@
 
       _eventStart: function(e) {
 
+
         var data = this.data().f;
 
         if (!data.disabled && !this.flip('isTurning')) {
@@ -1979,19 +1993,31 @@
             data.corner.x = e[0].pageX - pos.left;
             data.corner.y = e[0].pageY - pos.top;
 
+
             flipMethods._showFoldedPage.call(this, data.corner);
 
           } else if (!this.data().effect && this.is(':visible')) { // roll over
-
             var corner = flipMethods._cornerActivated.call(this, e[0]);
             if (corner) {
-              var origin = flipMethods._c.call(this, corner.corner, data.opts.cornerSize / 2);
-              corner.x = origin.x;
-              corner.y = origin.y;
+
+              var pos = data.parent.offset();
+
+              if(e[0] == undefined){
+                var corner = {}
+                corner.y = 250;
+                corner.x = -430;
+                corner.corner = "br"
+              } else {
+                corner.x = e[0].pageX - pos.left;
+                corner.y = e[0].pageY - pos.top;
+              }
               flipMethods._showFoldedPage.call(this, corner, true);
+
+                // if (!event.isDefaultPrevented())
+                //   flipMethods.hideFoldedPage.call(this, true);
+
             } else
               flipMethods.hideFoldedPage.call(this, true);
-
           }
         }
       },
